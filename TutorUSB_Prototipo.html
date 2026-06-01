@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TutorUSB — Plataforma de Tutorías Académicas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,600;0,800;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0f2042;
+    --blue: #1d4ed8;
+    --blue-mid: #2563eb;
+    --blue-light: #dbeafe;
+    --blue-pale: #eff6ff;
+    --accent: #f59e0b;
+    --accent-light: #fef3c7;
+    --green: #059669;
+    --green-light: #d1fae5;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --grey-50: #f8fafc;
+    --grey-100: #f1f5f9;
+    --grey-200: #e2e8f0;
+    --grey-400: #94a3b8;
+    --grey-600: #475569;
+    --grey-800: #1e293b;
+    --white: #ffffff;
+    --sidebar-w: 240px;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--grey-50);
+    color: var(--grey-800);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ─────────────────────────────────────────────────────────── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── LOGIN ─────────────────────────────────────────────────────────────── */
+  #screen-login {
+    background: linear-gradient(135deg, var(--navy) 0%, #1a3a6e 50%, #1d4ed8 100%);
+    align-items: center; justify-content: center; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  #screen-login::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 70% 20%, rgba(37,99,235,.3) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(245,158,11,.15) 0%, transparent 50%);
+  }
+  .login-card {
+    background: rgba(255,255,255,.07);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 20px;
+    padding: 48px 44px;
+    width: 420px;
+    position: relative; z-index: 1;
+    box-shadow: 0 24px 64px rgba(0,0,0,.4);
+  }
+  .login-logo {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 32px;
+  }
+  .login-logo-icon {
+    width: 44px; height: 44px; background: var(--accent);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .login-logo span {
+    font-family: 'Fraunces', serif; font-size: 26px; font-weight: 800;
+    color: var(--white); letter-spacing: -0.5px;
+  }
+  .login-subtitle {
+    color: rgba(255,255,255,.6); font-size: 13px; margin-top: 2px;
+  }
+  .login-title {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
+    color: var(--white); margin-bottom: 8px;
+  }
+  .login-desc { color: rgba(255,255,255,.65); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; color: rgba(255,255,255,.8); font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .form-input {
+    width: 100%; padding: 12px 16px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 10px; color: var(--white); font-size: 14px;
+    font-family: 'DM Sans', sans-serif; outline: none; transition: border .2s;
+  }
+  .form-input::placeholder { color: rgba(255,255,255,.4); }
+  .form-input:focus { border-color: var(--accent); background: rgba(255,255,255,.12); }
+  .btn-primary {
+    width: 100%; padding: 14px; background: var(--accent);
+    border: none; border-radius: 10px; color: var(--navy);
+    font-size: 15px; font-weight: 700; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all .2s; margin-top: 8px;
+  }
+  .btn-primary:hover { background: #fbbf24; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(245,158,11,.4); }
+  .login-footer { text-align: center; color: rgba(255,255,255,.45); font-size: 12px; margin-top: 20px; }
+  .error-msg {
+    background: rgba(220,38,38,.15); border: 1px solid rgba(220,38,38,.4);
+    border-radius: 8px; padding: 10px 14px; color: #fca5a5;
+    font-size: 13px; margin-bottom: 14px; display: none;
+  }
+
+  /* ── APP SHELL ──────────────────────────────────────────────────────────── */
+  #screen-app {
+    flex-direction: row;
+  }
+
+  /* ── SIDEBAR ────────────────────────────────────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w); min-height: 100vh; background: var(--navy);
+    display: flex; flex-direction: column; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-logo-icon {
+    width: 36px; height: 36px; background: var(--accent);
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .sidebar-logo-text {
+    font-family: 'Fraunces', serif; font-size: 20px; font-weight: 800;
+    color: var(--white); letter-spacing: -0.3px;
+  }
+  .sidebar-logo-sub { font-size: 10px; color: rgba(255,255,255,.5); margin-top: 1px; }
+
+  .sidebar-nav { padding: 16px 12px; flex: 1; }
+  .nav-section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: rgba(255,255,255,.3);
+    padding: 0 8px; margin-bottom: 8px; margin-top: 16px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 9px; cursor: pointer;
+    color: rgba(255,255,255,.65); font-size: 14px; font-weight: 500;
+    transition: all .18s; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.08); color: var(--white); }
+  .nav-item.active { background: var(--blue-mid); color: var(--white); }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-user {
+    padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--blue-mid);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: var(--white); flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 600; color: var(--white); }
+  .user-role { font-size: 11px; color: rgba(255,255,255,.45); }
+  .logout-btn {
+    margin-left: auto; background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,.4); font-size: 16px; padding: 4px;
+    transition: color .2s;
+  }
+  .logout-btn:hover { color: var(--red); }
+
+  /* ── MAIN CONTENT ───────────────────────────────────────────────────────── */
+  .main-content {
+    flex: 1; overflow-y: auto; min-height: 100vh;
+  }
+  .page { display: none; padding: 32px 36px; }
+  .page.active { display: block; }
+
+  .page-header { margin-bottom: 28px; }
+  .page-title {
+    font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600;
+    color: var(--grey-800); letter-spacing: -0.5px;
+  }
+  .page-subtitle { color: var(--grey-600); font-size: 14px; margin-top: 4px; }
+
+  /* ── CARDS ──────────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--grey-200); box-shadow: var(--shadow);
+    padding: 24px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600; color: var(--grey-800); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ── STATS ROW ──────────────────────────────────────────────────────────── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--grey-200); box-shadow: var(--shadow);
+    padding: 20px 24px;
+  }
+  .stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--grey-400); margin-bottom: 6px; }
+  .stat-value { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 600; color: var(--grey-800); }
+  .stat-change { font-size: 12px; color: var(--green); margin-top: 4px; }
+
+  /* ── TUTOR CARDS ────────────────────────────────────────────────────────── */
+  .tutors-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+  .tutor-card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--grey-200); box-shadow: var(--shadow);
+    padding: 20px; cursor: pointer; transition: all .2s;
+    position: relative; overflow: hidden;
+  }
+  .tutor-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--blue-mid); transform: scaleX(0); transition: transform .2s;
+  }
+  .tutor-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--blue-light); }
+  .tutor-card:hover::before { transform: scaleX(1); }
+  .tutor-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .tutor-avatar {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: var(--white); flex-shrink: 0;
+  }
+  .tutor-name { font-size: 15px; font-weight: 600; color: var(--grey-800); }
+  .tutor-carrera { font-size: 12px; color: var(--grey-600); margin-top: 2px; }
+  .rating { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--accent); margin-top: 4px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tag {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 20px; background: var(--blue-pale); color: var(--blue-mid); border: 1px solid var(--blue-light);
+  }
+  .tag.active-tag { background: var(--blue-mid); color: var(--white); }
+  .btn-ver {
+    width: 100%; padding: 10px; background: var(--navy);
+    border: none; border-radius: 8px; color: var(--white);
+    font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-ver:hover { background: var(--blue-mid); }
+
+  /* ── FILTERS ─────────────────────────────────────────────────────────── */
+  .filter-bar { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; flex-wrap: wrap; }
+  .filter-select {
+    padding: 10px 16px; border-radius: 9px; border: 1px solid var(--grey-200);
+    background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--grey-800); cursor: pointer; outline: none; box-shadow: var(--shadow);
+  }
+  .search-input {
+    padding: 10px 16px; border-radius: 9px; border: 1px solid var(--grey-200);
+    background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--grey-800); outline: none; box-shadow: var(--shadow); flex: 1; min-width: 200px;
+  }
+  .search-input:focus { border-color: var(--blue-mid); }
+
+  /* ── CALENDAR ────────────────────────────────────────────────────────── */
+  .calendar-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .cal-nav { background: none; border: 1px solid var(--grey-200); border-radius: 8px;
+    padding: 6px 12px; cursor: pointer; font-size: 16px; transition: all .2s; }
+  .cal-nav:hover { background: var(--grey-100); }
+  .cal-week { font-size: 14px; font-weight: 600; color: var(--grey-800); }
+
+  .calendar-grid {
+    display: grid; grid-template-columns: 80px repeat(5,1fr);
+    border: 1px solid var(--grey-200); border-radius: 10px; overflow: hidden;
+  }
+  .cal-col-header {
+    padding: 10px 8px; text-align: center; font-size: 12px; font-weight: 600;
+    color: var(--grey-600); background: var(--grey-50);
+    border-bottom: 1px solid var(--grey-200); border-right: 1px solid var(--grey-200);
+  }
+  .cal-col-header:last-child { border-right: none; }
+  .cal-col-header .day-num { font-size: 18px; font-weight: 700; color: var(--grey-800); display: block; }
+  .cal-col-header .today-dot {
+    width: 6px; height: 6px; background: var(--blue-mid); border-radius: 50%;
+    margin: 4px auto 0;
+  }
+  .cal-time-label {
+    padding: 8px 10px 8px 8px; font-size: 11px; color: var(--grey-400); text-align: right;
+    border-bottom: 1px solid var(--grey-100); border-right: 1px solid var(--grey-200);
+    background: var(--grey-50);
+  }
+  .cal-slot {
+    border-bottom: 1px solid var(--grey-100); border-right: 1px solid var(--grey-200);
+    padding: 4px; min-height: 48px; transition: background .15s;
+  }
+  .cal-slot:last-child { border-right: none; }
+  .cal-slot.available { background: #f0fdf4; cursor: pointer; }
+  .cal-slot.available:hover { background: #dcfce7; }
+  .cal-slot.available .slot-btn {
+    width: 100%; height: 100%; min-height: 40px; border: 1.5px dashed var(--green);
+    border-radius: 6px; background: rgba(5,150,105,.08); color: var(--green);
+    font-size: 11px; font-weight: 600; cursor: pointer; transition: all .2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .cal-slot.available .slot-btn:hover { background: var(--green); color: white; }
+  .cal-slot.booked .slot-inner {
+    background: var(--blue-mid); border-radius: 6px; padding: 6px 8px;
+    color: white; font-size: 11px; font-weight: 500; height: 100%; min-height: 40px;
+  }
+  .cal-slot.my-booking .slot-inner {
+    background: var(--accent); border-radius: 6px; padding: 6px 8px;
+    color: var(--navy); font-size: 11px; font-weight: 600; height: 100%; min-height: 40px;
+  }
+  .empty-state {
+    text-align: center; padding: 48px 24px;
+    background: var(--white); border-radius: var(--radius); border: 1px solid var(--grey-200);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--grey-800); margin-bottom: 6px; }
+  .empty-desc { font-size: 14px; color: var(--grey-600); line-height: 1.6; }
+
+  /* ── MODAL ──────────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 16px; box-shadow: var(--shadow-lg);
+    padding: 32px; width: 480px; max-width: 95vw; max-height: 90vh;
+    overflow-y: auto; animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-title {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
+    color: var(--grey-800); margin-bottom: 6px;
+  }
+  .modal-subtitle { font-size: 14px; color: var(--grey-600); margin-bottom: 24px; }
+  .detail-row { display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--grey-100); }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { font-size: 13px; color: var(--grey-600); }
+  .detail-value { font-size: 13px; font-weight: 600; color: var(--grey-800); }
+  .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+  .btn-confirm {
+    flex: 1; padding: 13px; background: var(--blue-mid); border: none;
+    border-radius: 10px; color: white; font-size: 14px; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+  }
+  .btn-confirm:hover { background: var(--navy); }
+  .btn-cancel-modal {
+    flex: 1; padding: 13px; background: var(--grey-100); border: 1px solid var(--grey-200);
+    border-radius: 10px; color: var(--grey-600); font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+  }
+  .btn-cancel-modal:hover { background: var(--grey-200); }
+
+  /* ── TUTORIAS LIST ──────────────────────────────────────────────────────── */
+  .tutoria-item {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--grey-200); box-shadow: var(--shadow);
+    padding: 20px 24px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .tutoria-date-box {
+    text-align: center; background: var(--navy); color: var(--white);
+    border-radius: 10px; padding: 10px 14px; flex-shrink: 0; min-width: 58px;
+  }
+  .tutoria-date-box .day { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; }
+  .tutoria-date-box .month { font-size: 11px; font-weight: 500; opacity: .7; text-transform: uppercase; }
+  .tutoria-info { flex: 1; }
+  .tutoria-title { font-size: 15px; font-weight: 600; color: var(--grey-800); }
+  .tutoria-meta { font-size: 13px; color: var(--grey-600); margin-top: 4px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .badge-confirmed { background: var(--green-light); color: var(--green); }
+  .badge-cancelled { background: var(--red-light); color: var(--red); }
+  .badge-pending { background: var(--accent-light); color: #92400e; }
+  .badge-completed { background: var(--grey-100); color: var(--grey-600); }
+
+  .btn-danger {
+    padding: 8px 16px; background: none; border: 1.5px solid var(--red);
+    border-radius: 8px; color: var(--red); font-size: 13px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+  }
+  .btn-danger:hover { background: var(--red); color: white; }
+  .btn-secondary {
+    padding: 8px 16px; background: none; border: 1.5px solid var(--grey-200);
+    border-radius: 8px; color: var(--grey-600); font-size: 13px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+  }
+  .btn-secondary:hover { background: var(--grey-100); }
+
+  /* ── TOAST ──────────────────────────────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 32px; right: 32px; z-index: 9999;
+    background: var(--grey-800); color: white; padding: 14px 20px;
+    border-radius: 12px; font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-lg); display: none;
+    animation: slideIn .3s ease; max-width: 360px; line-height: 1.5;
+  }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); }
+  .toast.warning { background: var(--accent); color: var(--navy); }
+  .toast.show { display: block; }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── DASHBOARD ──────────────────────────────────────────────────────────── */
+  .upcoming-card {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue-mid) 100%);
+    border-radius: var(--radius); padding: 24px; color: white; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .upcoming-card::after {
+    content: '📚'; position: absolute; right: 24px; top: 50%;
+    transform: translateY(-50%); font-size: 64px; opacity: .15;
+  }
+  .upcoming-label { font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; opacity: .7; margin-bottom: 8px; }
+  .upcoming-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .upcoming-meta { font-size: 14px; opacity: .8; }
+  .reminder-badge {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+    background: rgba(245,158,11,.25); border: 1px solid rgba(245,158,11,.5);
+    border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600;
+    color: #fef3c7;
+  }
+
+  /* ── PROFILE ────────────────────────────────────────────────────────────── */
+  .profile-hero {
+    background: linear-gradient(135deg, var(--navy), var(--blue-mid));
+    border-radius: var(--radius); padding: 28px 32px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 24px; color: white;
+  }
+  .profile-avatar-big {
+    width: 72px; height: 72px; background: var(--accent); border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: var(--navy); flex-shrink: 0;
+  }
+  .profile-name { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; }
+  .profile-meta { opacity: .75; font-size: 14px; margin-top: 4px; }
+
+  /* ── STARS ──────────────────────────────────────────────────────────────── */
+  .stars { display: flex; gap: 4px; }
+  .star { font-size: 20px; cursor: pointer; color: var(--grey-200); transition: color .15s; }
+  .star.filled { color: var(--accent); }
+
+  /* ── SECTION DIVIDER ────────────────────────────────────────────────────── */
+  .section-divider { height: 1px; background: var(--grey-200); margin: 24px 0; }
+
+  /* ── RESPONSIVE HELPERS ─────────────────────────────────────────────────── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* ── BACK BTN ───────────────────────────────────────────────────────────── */
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; background: var(--grey-100); border: 1px solid var(--grey-200);
+    border-radius: 8px; color: var(--grey-600); font-size: 13px; font-weight: 600;
+    cursor: pointer; margin-bottom: 20px; transition: all .2s; font-family: 'DM Sans', sans-serif;
+    border: none;
+  }
+  .back-btn:hover { background: var(--grey-200); }
+
+  /* ── ALERT BOX ──────────────────────────────────────────────────────────── */
+  .alert {
+    border-radius: 10px; padding: 14px 18px; font-size: 14px; margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
+  }
+  .alert-warning { background: var(--accent-light); border: 1px solid #fcd34d; color: #78350f; }
+  .alert-error   { background: var(--red-light); border: 1px solid #fca5a5; color: #7f1d1d; }
+  .alert-success { background: var(--green-light); border: 1px solid #6ee7b7; color: #065f46; }
+  .alert-info    { background: var(--blue-pale); border: 1px solid var(--blue-light); color: var(--navy); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SCREEN 1 — LOGIN
+═══════════════════════════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">📚</div>
+      <div>
+        <div style="display:flex;align-items:baseline;gap:4px;">
+          <span>TutorUSB</span>
+        </div>
+        <div class="login-subtitle">Universidad Simón Bolívar · Barranquilla</div>
+      </div>
+    </div>
+    <div class="login-title">Bienvenido de nuevo</div>
+    <div class="login-desc">Ingresa con tu correo institucional para acceder a la plataforma de tutorías.</div>
+
+    <div id="login-error" class="error-msg">
+  ⚠️ Solo se permiten correos institucionales (@unisimon.edu.co). Usa el correo que te asignó la universidad.
+</div>
+
+    <div class="form-group">
+      <label class="form-label">Correo institucional</label>
+      <input class="form-input" id="login-email" type="email"
+             placeholder="carlos.hernandez@unisimon.edu.co" value="carlos.hernandez@unisimon.edu.co">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña institucional</label>
+      <input class="form-input" id="login-pass" type="password" placeholder="••••••••" value="••••••••">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Ingresar con correo institucional →</button>
+    <div class="login-footer">Acceso exclusivo para estudiantes y tutores de la USB · TutorUSB v1.0</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SCREEN 2 — APP
+═══════════════════════════════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">📚</div>
+      <div>
+        <div class="sidebar-logo-text">TutorUSB</div>
+        <div class="sidebar-logo-sub">USB · Barranquilla</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="icon">🏠</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('buscar', this)">
+        <span class="icon">🔍</span> Buscar tutores
+      </div>
+      <div class="nav-item" onclick="showPage('mis-tutorias', this)">
+        <span class="icon">📅</span> Mis tutorías
+        <span style="margin-left:auto;background:var(--blue-mid);color:white;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;">2</span>
+      </div>
+      <div class="nav-section-label">Cuenta</div>
+      <div class="nav-item" onclick="showPage('perfil', this)">
+        <span class="icon">👤</span> Mi perfil
+      </div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="avatar">CH</div>
+      <div>
+        <div class="user-name">Carlos H.</div>
+        <div class="user-role">Estudiante · 3er sem.</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Cerrar sesión">⬡</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- ── DASHBOARD ───────────────────────────────────────────────── -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div class="page-title">Buenos días, Carlos 👋</div>
+        <div class="page-subtitle">Martes 26 de mayo de 2026 · Universidad Simón Bolívar</div>
+      </div>
+
+      <div class="upcoming-card">
+        <div class="upcoming-label">⏰ Próxima tutoría</div>
+        <div class="upcoming-title">Cálculo III · con Sebastián Torres</div>
+        <div class="upcoming-meta">Miércoles 27 mayo · 10:00–11:00 am · Salón B-204</div>
+        <div class="reminder-badge">🔔 Recordatorio activo — te avisaremos 1 hora antes</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Tutorías este mes</div>
+          <div class="stat-value">4</div>
+          <div class="stat-change">↑ +2 vs mes anterior</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Horas de estudio</div>
+          <div class="stat-value">6h</div>
+          <div class="stat-change">↑ 3 sesiones completadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Materias activas</div>
+          <div class="stat-value">2</div>
+          <div class="stat-change">Cálculo III · POO</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tutores favoritos</div>
+          <div class="stat-value">3</div>
+          <div class="stat-change">↑ calificación promedio 4.8★</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">📌 Tutorías confirmadas</div>
+          <div class="tutoria-item" style="box-shadow:none;border:1px solid var(--grey-100);padding:14px 16px;margin-bottom:8px;">
+            <div class="tutoria-date-box"><div class="day">27</div><div class="month">May</div></div>
+            <div class="tutoria-info">
+              <div class="tutoria-title">Cálculo III</div>
+              <div class="tutoria-meta">10:00 am · Sebastián Torres · Salón B-204</div>
+            </div>
+            <span class="badge badge-confirmed">✓ Confirmada</span>
+          </div>
+          <div class="tutoria-item" style="box-shadow:none;border:1px solid var(--grey-100);padding:14px 16px;">
+            <div class="tutoria-date-box" style="background:var(--grey-400);"><div class="day">30</div><div class="month">May</div></div>
+            <div class="tutoria-info">
+              <div class="tutoria-title">Prog. Orientada a Objetos</div>
+              <div class="tutoria-meta">2:00 pm · Laura Díaz · Virtual (Meet)</div>
+            </div>
+            <span class="badge badge-confirmed">✓ Confirmada</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">💡 Tutores recomendados para ti</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--grey-50);border-radius:9px;cursor:pointer;" onclick="showPage('buscar',null)">
+              <div class="tutor-avatar" style="width:40px;height:40px;font-size:16px;border-radius:10px;background:#1d4ed8;">ST</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:14px;">Sebastián Torres</div><div style="font-size:12px;color:var(--grey-600);">Cálculo III · Física</div></div>
+              <div class="rating" style="font-size:12px;">⭐ 4.9</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--grey-50);border-radius:9px;cursor:pointer;" onclick="showPage('buscar',null)">
+              <div class="tutor-avatar" style="width:40px;height:40px;font-size:16px;border-radius:10px;background:#059669;">LD</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:14px;">Laura Díaz</div><div style="font-size:12px;color:var(--grey-600);">POO · Estructuras de datos</div></div>
+              <div class="rating" style="font-size:12px;">⭐ 4.7</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--grey-50);border-radius:9px;cursor:pointer;" onclick="showPage('buscar',null)">
+              <div class="tutor-avatar" style="width:40px;height:40px;font-size:16px;border-radius:10px;background:#7c3aed;">AM</div>
+              <div style="flex:1;"><div style="font-weight:600;font-size:14px;">Andrés Mora</div><div style="font-size:12px;color:var(--grey-600);">Álgebra · Cálculo I y II</div></div>
+              <div class="rating" style="font-size:12px;">⭐ 4.8</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BUSCAR TUTORES ───────────────────────────────────────────── -->
+    <div id="page-buscar" class="page">
+      <div class="page-header">
+        <div class="page-title">Buscar tutores</div>
+        <div class="page-subtitle">Filtra por materia y encuentra disponibilidad en tiempo real</div>
+      </div>
+
+      <div class="filter-bar">
+        <input class="search-input" id="search-input" placeholder="🔍  Buscar tutor por nombre..." oninput="filterTutors()">
+        <select class="filter-select" id="filter-materia" onchange="filterTutors()">
+          <option value="">Todas las materias</option>
+          <option value="calculo">Cálculo III</option>
+          <option value="poo">Programación Orientada a Objetos</option>
+          <option value="algebra">Álgebra Lineal</option>
+          <option value="fisica">Física I</option>
+        </select>
+      </div>
+
+      <div id="tutors-grid" class="tutors-grid"></div>
+    </div>
+
+    <!-- ── DISPONIBILIDAD TUTOR ─────────────────────────────────────── -->
+    <div id="page-disponibilidad" class="page">
+      <button class="back-btn" onclick="showPage('buscar',null)">← Volver a tutores</button>
+      <div id="disp-content"></div>
+    </div>
+
+    <!-- ── MIS TUTORÍAS ─────────────────────────────────────────────── -->
+    <div id="page-mis-tutorias" class="page">
+      <div class="page-header">
+        <div class="page-title">Mis tutorías</div>
+        <div class="page-subtitle">Historial y sesiones programadas</div>
+      </div>
+      <div id="mis-tutorias-list"></div>
+    </div>
+
+    <!-- ── PERFIL ────────────────────────────────────────────────────── -->
+    <div id="page-perfil" class="page">
+      <div class="page-header">
+        <div class="page-title">Mi perfil</div>
+      </div>
+      <div class="profile-hero">
+        <div class="profile-avatar-big">CH</div>
+        <div>
+          <div class="profile-name">Carlos Hernández</div>
+          <div class="profile-meta">Ingeniería de Sistemas · 3er semestre · USB Barranquilla</div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <span class="badge badge-confirmed">✓ Verificado</span>
+            <span class="badge badge-pending">Estudiante</span>
+          </div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">📧 Información institucional</div>
+          <div class="detail-row"><span class="detail-label">Correo</span><span class="detail-value">carlos.hernandez@unisimon.edu.co</span></div>
+          <div class="detail-row"><span class="detail-label">Código estudiantil</span><span class="detail-value">2024-IS-1847</span></div>
+          <div class="detail-row"><span class="detail-label">Facultad</span><span class="detail-value">Ingeniería</span></div>
+          <div class="detail-row"><span class="detail-label">Semestre</span><span class="detail-value">3er semestre</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔔 Preferencias de notificación</div>
+          <div class="detail-row">
+            <span class="detail-label">Recordatorio por correo</span>
+            <span style="background:var(--green-light);color:var(--green);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">Activo</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Notificación push</span>
+            <span style="background:var(--green-light);color:var(--green);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">Activo</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Anticipación del recordatorio</span>
+            <span class="detail-value">1 hora antes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════════════ -->
+
+<!-- Confirm booking -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Confirmar reserva</div>
+    <div class="modal-subtitle">Revisa los detalles antes de confirmar tu tutoría.</div>
+    <div id="modal-confirm-body"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" onclick="closeModal('modal-confirm')">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmBooking()">Confirmar reserva ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel tutoria -->
+<div id="modal-cancel" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Cancelar tutoría</div>
+    <div class="modal-subtitle" id="modal-cancel-subtitle"></div>
+    <div id="modal-cancel-body"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" onclick="closeModal('modal-cancel')">No, mantener</button>
+      <button class="btn-confirm" style="background:var(--red);" onclick="doCancelTutoria()">Sí, cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rate tutoria -->
+<div id="modal-rate" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Calificar tutoría</div>
+    <div class="modal-subtitle" id="modal-rate-subtitle"></div>
+    <div style="text-align:center;margin:24px 0;">
+      <div style="font-size:14px;color:var(--grey-600);margin-bottom:12px;">¿Cómo fue tu experiencia?</div>
+      <div class="stars" id="star-container" style="justify-content:center;">
+        <span class="star" onclick="setRating(1)">★</span>
+        <span class="star" onclick="setRating(2)">★</span>
+        <span class="star" onclick="setRating(3)">★</span>
+        <span class="star" onclick="setRating(4)">★</span>
+        <span class="star" onclick="setRating(5)">★</span>
+      </div>
+      <textarea id="rate-comment" style="width:100%;margin-top:16px;padding:12px;border:1px solid var(--grey-200);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;resize:none;outline:none;color:var(--grey-800);" rows="3" placeholder="Escribe un comentario (opcional)..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" onclick="closeModal('modal-rate')">Cerrar</button>
+      <button class="btn-confirm" onclick="submitRating()">Enviar calificación ⭐</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════
+const TUTORS = [
+  {
+    id: 1, name: "Sebastián Torres", initials: "ST", color: "#1d4ed8",
+    carrera: "Ing. de Sistemas · 7mo semestre",
+    rating: 4.9, reviews: 34,
+    materias: ["Cálculo III", "Física I", "Cálculo II"],
+    materiaKeys: ["calculo", "fisica"],
+    desc: "Domina integración, series y ecuaciones diferenciales. Metodología clara con ejemplos paso a paso.",
+    slots: [
+      {day:"Lun", date:26, hora:"8:00–9:00 am",  status:"available"},
+      {day:"Mié", date:28, hora:"10:00–11:00 am", status:"available", selected: false},
+      {day:"Mié", date:28, hora:"2:00–3:00 pm",   status:"booked"},
+      {day:"Jue", date:29, hora:"8:00–9:00 am",   status:"available"},
+      {day:"Vie", date:30, hora:"11:00 am–12:00 m",status:"available"},
+    ]
+  },
+  {
+    id: 2, name: "Laura Díaz", initials: "LD", color: "#059669",
+    carrera: "Ing. de Sistemas · 8vo semestre",
+    rating: 4.7, reviews: 28,
+    materias: ["POO", "Estructuras de Datos", "Algoritmos"],
+    materiaKeys: ["poo"],
+    desc: "Especializada en Java, Python y patrones de diseño. Clases dinámicas con proyectos reales.",
+    slots: [
+      {day:"Lun", date:26, hora:"10:00–11:00 am", status:"available"},
+      {day:"Mar", date:27, hora:"3:00–4:00 pm",   status:"booked"},
+      {day:"Jue", date:29, hora:"9:00–10:00 am",  status:"available"},
+      {day:"Vie", date:30, hora:"2:00–3:00 pm",   status:"available"},
+    ]
+  },
+  {
+    id: 3, name: "Andrés Mora", initials: "AM", color: "#7c3aed",
+    carrera: "Ingeniería Civil · 9no semestre",
+    rating: 4.8, reviews: 41,
+    materias: ["Álgebra Lineal", "Cálculo I", "Cálculo II"],
+    materiaKeys: ["algebra", "calculo"],
+    desc: "Experto en álgebra matricial, transformaciones lineales y cálculo diferencial.",
+    slots: [
+      {day:"Lun", date:26, hora:"2:00–3:00 pm",   status:"available"},
+      {day:"Mié", date:28, hora:"8:00–9:00 am",   status:"available"},
+      {day:"Mié", date:28, hora:"11:00 am–12:00 m",status:"booked"},
+      {day:"Vie", date:30, hora:"8:00–9:00 am",   status:"available"},
+    ]
+  },
+  {
+    id: 4, name: "Paola Jiménez", initials: "PJ", color: "#be185d",
+    carrera: "Ing. Industrial · 6to semestre",
+    rating: 4.6, reviews: 19,
+    materias: ["Física I", "Física II", "Termodinámica"],
+    materiaKeys: ["fisica"],
+    desc: "Mecánica, electromagnetismo y termodinámica. Clases con ejercicios de parciales anteriores.",
+    slots: []  // sin horarios esta semana
+  },
+];
+
+let misTutorias = [
+  { id: 1, tutor:"Sebastián Torres", materia:"Cálculo III", dia:27, mes:"May", hora:"10:00 am", lugar:"Salón B-204", status:"confirmed", canCancel: true },
+  { id: 2, tutor:"Laura Díaz", materia:"Prog. Orientada a Objetos", dia:30, mes:"May", hora:"2:00 pm", lugar:"Virtual (Meet)", status:"confirmed", canCancel: true },
+  { id: 3, tutor:"Andrés Mora", materia:"Álgebra Lineal", dia:15, mes:"May", hora:"11:00 am", lugar:"Salón A-102", status:"completed", canCancel: false, rated: false },
+  { id: 4, tutor:"Sebastián Torres", materia:"Cálculo III", dia:8, mes:"May", hora:"9:00 am", lugar:"Salón B-204", status:"completed", canCancel: false, rated: true },
+];
+
+let pendingBooking = null;
+let pendingCancelId = null;
+let currentRating = 0;
+let ratingTutoriaId = null;
+
+// ══════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════
+function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const errBox = document.getElementById('login-error');
+  if (!email.endsWith('@unisimon.edu.co')) {
+    errBox.style.display = 'block';
+    return;
+  }
+  errBox.style.display = 'none';
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  renderMisTutorias();
+  renderTutorsGrid();
+  showToast('✅ Sesión iniciada correctamente. Bienvenido, Carlos.', 'success');
+}
+
+function doLogout() {
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════════
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  if (id === 'mis-tutorias') renderMisTutorias();
+  if (id === 'buscar') renderTutorsGrid();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TUTORS GRID
+// ══════════════════════════════════════════════════════════════════
+function renderTutorsGrid() {
+  const q = document.getElementById('search-input')?.value.toLowerCase() || '';
+  const m = document.getElementById('filter-materia')?.value || '';
+  const grid = document.getElementById('tutors-grid');
+  if (!grid) return;
+
+  let filtered = TUTORS.filter(t => {
+    const matchQ = !q || t.name.toLowerCase().includes(q);
+    const matchM = !m || t.materiaKeys.includes(m);
+    return matchQ && matchM;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;">
+        <div class="empty-state">
+          <div class="empty-icon">😔</div>
+          <div class="empty-title">No hay tutores disponibles</div>
+          <div class="empty-desc">No encontramos tutores para esta materia esta semana.<br>Puedes activar una alerta para cuando haya disponibilidad.</div>
+          <button class="btn-primary" style="width:auto;padding:10px 24px;margin-top:16px;" onclick="showToast('🔔 Alerta activada. Te notificaremos cuando haya disponibilidad para esta materia.','success')">Activar alerta</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(t => `
+    <div class="tutor-card" onclick="showDisponibilidad(${t.id})">
+      <div class="tutor-header">
+        <div class="tutor-avatar" style="background:${t.color};">${t.initials}</div>
+        <div>
+          <div class="tutor-name">${t.name}</div>
+          <div class="tutor-carrera">${t.carrera}</div>
+          <div class="rating">⭐ ${t.rating} <span style="color:var(--grey-400);font-weight:400;">(${t.reviews} reseñas)</span></div>
+        </div>
+      </div>
+      <div class="tag-row">${t.materias.map((m,i)=>`<span class="tag${i===0?' active-tag':''}">${m}</span>`).join('')}</div>
+      <p style="font-size:13px;color:var(--grey-600);margin-bottom:14px;line-height:1.55;">${t.desc}</p>
+      <button class="btn-ver">Ver disponibilidad →</button>
+    </div>`).join('');
+}
+
+function filterTutors() { renderTutorsGrid(); }
+
+// ══════════════════════════════════════════════════════════════════
+// DISPONIBILIDAD
+// ══════════════════════════════════════════════════════════════════
+function showDisponibilidad(tutorId) {
+  showPage('disponibilidad', null);
+  const t = TUTORS.find(x => x.id === tutorId);
+  const container = document.getElementById('disp-content');
+
+  const hasAvailable = t.slots.some(s => s.status === 'available');
+
+  let alertHtml = '';
+  if (!hasAvailable) {
+    alertHtml = `<div class="alert alert-warning">
+      ⚠️ <div><strong>Sin horarios disponibles esta semana.</strong><br>
+      Este tutor no tiene horarios disponibles para la semana del 26–30 de mayo. 
+      Puedes activar una alerta para cuando registre disponibilidad.
+      <br><button class="btn-primary" style="width:auto;padding:8px 18px;margin-top:10px;font-size:13px;" 
+        onclick="showToast('🔔 Alerta activada. Te notificaremos cuando ${t.name} registre disponibilidad.','success')">
+        Activar alerta</button></div></div>`;
+  }
+
+  const days = ['Lun 26', 'Mar 27', 'Mié 28', 'Jue 29', 'Vie 30'];
+  const hours = ['8:00–9:00 am','9:00–10:00 am','10:00–11:00 am','11:00 am–12:00 m','2:00–3:00 pm','3:00–4:00 pm'];
+
+  let gridCells = '';
+  days.forEach((d, di) => {
+    gridCells += `<div class="cal-col-header">
+      <span style="font-size:11px;">${d.split(' ')[0]}</span>
+      <span class="day-num">${d.split(' ')[1]}</span>
+      ${di===1?'<div class="today-dot"></div>':''}
+    </div>`;
+  });
+
+  hours.forEach(h => {
+    gridCells += `<div class="cal-time-label">${h.split('–')[0]}</div>`;
+    days.forEach((d, di) => {
+      const slot = t.slots.find(s => s.hora === h && s.day === d.split(' ')[0]);
+      if (!slot) {
+        gridCells += `<div class="cal-slot"></div>`;
+      } else if (slot.status === 'available') {
+        gridCells += `<div class="cal-slot available">
+          <button class="slot-btn" onclick="openConfirmModal(${t.id},'${h}','${d}')">+ Reservar</button>
+        </div>`;
+      } else if (slot.status === 'booked') {
+        gridCells += `<div class="cal-slot booked"><div class="slot-inner">Ocupado</div></div>`;
+      } else {
+        gridCells += `<div class="cal-slot my-booking"><div class="slot-inner">✓ Mi reserva</div></div>`;
+      }
+    });
+  });
+
+  container.innerHTML = `
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="tutor-avatar" style="width:52px;height:52px;font-size:20px;border-radius:12px;background:${t.color};">${t.initials}</div>
+        <div>
+          <div class="page-title" style="font-size:22px;">${t.name}</div>
+          <div class="page-subtitle">${t.carrera} · ⭐ ${t.rating} (${t.reviews} reseñas)</div>
+        </div>
+      </div>
+    </div>
+    ${alertHtml}
+    ${hasAvailable ? `
+    <div class="card">
+      <div class="card-title">📅 Disponibilidad — Semana 26–30 mayo 2026</div>
+      <p style="font-size:13px;color:var(--grey-600);margin-bottom:16px;">Haz clic en un bloque <span style="color:var(--green);font-weight:600;">verde</span> para reservar tu tutoría.</p>
+      <div class="calendar-grid" style="grid-template-columns:90px repeat(5,1fr);">
+        <div class="cal-col-header" style="background:var(--grey-100);">Hora</div>
+        ${gridCells}
+      </div>
+      <div style="display:flex;gap:16px;margin-top:16px;font-size:12px;color:var(--grey-600);">
+        <span>🟢 Disponible</span>
+        <span>⬜ Sin horario</span>
+        <span style="color:var(--grey-400);">■ Ocupado</span>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BOOKING
+// ══════════════════════════════════════════════════════════════════
+function openConfirmModal(tutorId, hora, day) {
+  const t = TUTORS.find(x => x.id === tutorId);
+  pendingBooking = { tutorId, hora, day, tutor: t };
+
+  document.getElementById('modal-confirm-body').innerHTML = `
+    <div class="alert alert-info" style="margin-bottom:16px;">
+      📋 Revisa que todos los datos sean correctos antes de confirmar.
+    </div>
+    <div class="detail-row"><span class="detail-label">Tutor</span><span class="detail-value">${t.name}</span></div>
+    <div class="detail-row"><span class="detail-label">Materia</span><span class="detail-value">${t.materias[0]}</span></div>
+    <div class="detail-row"><span class="detail-label">Fecha</span><span class="detail-value">${day} de mayo 2026</span></div>
+    <div class="detail-row"><span class="detail-label">Hora</span><span class="detail-value">${hora}</span></div>
+    <div class="detail-row"><span class="detail-label">Duración</span><span class="detail-value">60 minutos</span></div>
+    <div class="detail-row"><span class="detail-label">Modalidad</span><span class="detail-value">Presencial · Salón B-204</span></div>
+    <div class="detail-row"><span class="detail-label">Recordatorio</span><span class="detail-value">✓ 1 hora antes (correo + push)</span></div>
+  `;
+  openModal('modal-confirm');
+}
+
+function confirmBooking() {
+  if (!pendingBooking) return;
+  const t = pendingBooking.tutor;
+
+  // Mark slot
+  const slot = t.slots.find(s => s.hora === pendingBooking.hora);
+  if (slot) slot.status = 'my-booking';
+
+  // Add to mis tutorias
+  const dayNum = parseInt(pendingBooking.day.split(' ')[1]);
+  misTutorias.unshift({
+    id: Date.now(), tutor: t.name, materia: t.materias[0],
+    dia: dayNum, mes: 'May', hora: pendingBooking.hora.split('–')[0],
+    lugar: 'Salón B-204', status: 'confirmed', canCancel: true
+  });
+
+  closeModal('modal-confirm');
+  showToast(`✅ ¡Tutoría reservada con ${t.name}! Recibirás un correo de confirmación en tu cuenta institucional.`, 'success');
+  showDisponibilidad(pendingBooking.tutorId);
+  pendingBooking = null;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MIS TUTORÍAS
+// ══════════════════════════════════════════════════════════════════
+function renderMisTutorias() {
+  const container = document.getElementById('mis-tutorias-list');
+  if (!container) return;
+
+  const confirmed = misTutorias.filter(t => t.status === 'confirmed');
+  const completed = misTutorias.filter(t => t.status === 'completed');
+  const cancelled = misTutorias.filter(t => t.status === 'cancelled');
+
+  let html = '';
+
+  if (confirmed.length) {
+    html += `<h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--grey-400);margin-bottom:12px;">Próximas</h3>`;
+    confirmed.forEach(t => { html += renderTutoriaItem(t); });
+  }
+  if (completed.length) {
+    html += `<div class="section-divider"></div><h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--grey-400);margin-bottom:12px;">Completadas</h3>`;
+    completed.forEach(t => { html += renderTutoriaItem(t); });
+  }
+  if (cancelled.length) {
+    html += `<div class="section-divider"></div><h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--grey-400);margin-bottom:12px;">Canceladas</h3>`;
+    cancelled.forEach(t => { html += renderTutoriaItem(t); });
+  }
+
+  container.innerHTML = html;
+}
+
+function renderTutoriaItem(t) {
+  let badge = '';
+  if (t.status==='confirmed') badge=`<span class="badge badge-confirmed">✓ Confirmada</span>`;
+  if (t.status==='completed') badge=`<span class="badge badge-completed">Completada</span>`;
+  if (t.status==='cancelled') badge=`<span class="badge badge-cancelled">Cancelada</span>`;
+
+  let actions = '';
+  if (t.status==='confirmed' && t.canCancel) {
+    actions = `<button class="btn-danger" onclick="openCancelModal(${t.id})">Cancelar</button>`;
+  }
+  if (t.status==='completed' && !t.rated) {
+    actions = `<button class="btn-secondary" onclick="openRateModal(${t.id},'${t.tutor}','${t.materia}')">⭐ Calificar</button>`;
+  }
+
+  return `<div class="tutoria-item" id="tutoria-${t.id}">
+    <div class="tutoria-date-box" style="${t.status==='cancelled'?'background:var(--grey-400);':''}">
+      <div class="day">${t.dia}</div><div class="month">${t.mes}</div>
+    </div>
+    <div class="tutoria-info">
+      <div class="tutoria-title">${t.materia}</div>
+      <div class="tutoria-meta">${t.hora} · ${t.tutor} · ${t.lugar}</div>
+    </div>
+    ${badge}
+    ${actions ? `<div>${actions}</div>` : ''}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CANCEL
+// ══════════════════════════════════════════════════════════════════
+function openCancelModal(id) {
+  const t = misTutorias.find(x => x.id === id);
+  pendingCancelId = id;
+
+  // Simulate: check if less than 2 hours (id===1 is the next one)
+  if (id === 1 && false) { // flip to true to demo sad path
+    closeModal('modal-cancel');
+    showToast('⚠️ No es posible cancelar esta tutoría con menos de 2 horas de anticipación. Si tienes una emergencia, contacta directamente al tutor.', 'warning');
+    return;
+  }
+
+  document.getElementById('modal-cancel-subtitle').textContent = `¿Estás seguro que deseas cancelar tu tutoría de ${t.materia} con ${t.tutor}? Esta acción no se puede deshacer.`;
+  document.getElementById('modal-cancel-body').innerHTML = `
+    <div class="alert alert-warning">
+      ⚠️ Al cancelar, el horario quedará disponible para otro estudiante y recibirás una notificación de confirmación.
+    </div>
+    <div class="detail-row"><span class="detail-label">Materia</span><span class="detail-value">${t.materia}</span></div>
+    <div class="detail-row"><span class="detail-label">Tutor</span><span class="detail-value">${t.tutor}</span></div>
+    <div class="detail-row"><span class="detail-label">Fecha y hora</span><span class="detail-value">${t.dia} Mayo · ${t.hora}</span></div>
+  `;
+  openModal('modal-cancel');
+}
+
+function doCancelTutoria() {
+  const t = misTutorias.find(x => x.id === pendingCancelId);
+  if (t) t.status = 'cancelled';
+  closeModal('modal-cancel');
+  renderMisTutorias();
+  showToast(`❌ Tutoría cancelada. El tutor ${t?.tutor} ha sido notificado. El horario ya está disponible para otros estudiantes.`, 'error');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RATE
+// ══════════════════════════════════════════════════════════════════
+function openRateModal(id, tutor, materia) {
+  ratingTutoriaId = id;
+  currentRating = 0;
+  document.getElementById('modal-rate-subtitle').textContent = `Califica tu tutoría de ${materia} con ${tutor}.`;
+  document.querySelectorAll('.star').forEach(s => s.classList.remove('filled'));
+  document.getElementById('rate-comment').value = '';
+  openModal('modal-rate');
+}
+
+function setRating(n) {
+  currentRating = n;
+  document.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('filled', i < n);
+  });
+}
+
+function submitRating() {
+  if (!currentRating) { showToast('⭐ Selecciona al menos una estrella.', 'warning'); return; }
+  const t = misTutorias.find(x => x.id === ratingTutoriaId);
+  if (t) t.rated = true;
+  closeModal('modal-rate');
+  renderMisTutorias();
+  showToast(`⭐ Calificación de ${currentRating} estrellas enviada. ¡Gracias por tu retroalimentación!`, 'success');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+let toastTimeout;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+// Click outside modal closes it
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// Init
+renderTutorsGrid();
+</script>
+</body>
+</html>
